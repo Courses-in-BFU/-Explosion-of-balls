@@ -1,0 +1,119 @@
+flagFirstInitTrue = 1
+flagFirstInitFalse = 0
+flagFirstInit = flagFirstInitTrue
+
+While "True" 
+  Init()
+  While flagAnimations = flagAnimationsTrue
+    Update()
+    Draw()
+    Program.Delay(20)
+  EndWhile
+  Program.Delay(50)
+EndWhile
+
+Sub Init
+  flagAnimationsTrue = 1
+  flagAnimationsFalse = 0
+  flagAnimations = flagAnimationsTrue
+  
+  flagExplosionOn = 1
+  flagExplosionOff = 0
+  flagExplosion  = flagExplosionOff
+  
+  flagNumberBallDrop = 0
+  
+  intWindowWidth = GraphicsWindow.Width
+  intWindowHeight = GraphicsWindow.Height
+  
+  intFirstBallR = 10
+  dblFirstBallX = - intFirstBallR
+  dblFirstBallY = intWindowHeight - intFirstBallR
+  intSlowdownFirstBall = 150
+  dblVxFirstBall = intWindowWidth / (2*intSlowdownFirstBall)
+  dblVyFirstBall = intWindowHeight / (2*intSlowdownFirstBall)
+  
+  intQuantityBall = 50
+  
+  intRadiusExplosionMax = 250
+  intTimeExplosionMax = 50
+  intTimeExplosion = 0
+  dblAccelerationExplosion = 0.002
+  intWeightBallsExplosionMax = 100
+  intWeightBallsExplosionMin = 10
+  intTimeDrop = 0
+  dblAccelerationDrop = 0.00008
+  intWeightBallsMax = 100 
+  intWeightBallsMin = 50
+  
+  If flagFirstInit = flagFirstInitTrue Then  
+    colorBalls = "#FF0000"
+    GraphicsWindow.BrushColor = colorBalls
+    GraphicsWindow.PenColor = colorBalls
+    objFirstBall  = Shapes.AddEllipse(intFirstBallR*2, intFirstBallR*2)
+  Endif 
+  
+  For i = 1 To intQuantityBall
+    intRadius[i] = 0 
+    intRadiusMax[i] = Math.GetRandomNumber(intRadiusExplosionMax)
+    intAngelBall[i] = Math.GetRandomNumber(360)
+    If flagFirstInit = flagFirstInitTrue Then  
+      colorBalls = GraphicsWindow.GetRandomColor()
+      GraphicsWindow.BrushColor = colorBalls
+      GraphicsWindow.PenColor = colorBalls
+      objBalls[i] = Shapes.AddEllipse(intFirstBallR*2, intFirstBallR*2)
+    Endif 
+    Shapes.HideShape(objBalls[i])
+    intX[i] = intWindowWidth/2 - intFirstBallR
+    intY[i] = intWindowHeight/2 - intFirstBallR
+    intWeightBallExplosion[i] = Math.GetRandomNumber(intWeightBallsExplosionMax-intWeightBallsExplosionMin) + intWeightBallsExplosionMin
+    intWeightBall[i] = Math.GetRandomNumber(intWeightBallsMax-intWeightBallsMin) + intWeightBallsMin
+  EndFor
+  
+    flagFirstInit = flagFirstInitFalse
+EndSub
+
+Sub Update
+  If (flagExplosion = flagExplosionOff)  And ( dblFirstBallX < (intWindowWidth/2 - intFirstBallR)) And (dblFirstBallY > (intWindowHeight/2 - intFirstBallR))  Then
+    dblFirstBallX = dblFirstBallX + dblVxFirstBall
+    dblFirstBallY = dblFirstBallY - dblVyFirstBall
+  Else
+    flagExplosion = flagExplosionOn
+    intTimeExplosion = intTimeExplosion + 1
+    For i = 1 To intQuantityBall
+      If intTimeExplosion < intTimeExplosionMax Then 
+        If intRadius [i] < intRadiusExplosionMax  Then
+          intRadius [i] = intRadius [i] + (intTimeExplosionMax - intTimeExplosion) * dblAccelerationExplosion * intWeightBallExplosion[i]  
+       EndIf
+        intX[i] = intRadius [i] * Math.Cos( Math.GetRadians(intAngelBall[i])) + intWindowWidth/2 - intFirstBallR
+        intY[i] = intRadius [i] * Math.Sin( Math.GetRadians(intAngelBall[i])) + intWindowHeight/2 - intFirstBallR
+      Else
+        If intY[i] < intWindowHeight Then
+          intY[i] = intY[i] + Math.Round(intTimeDrop * dblAccelerationDrop*intWeightBall[i] )
+          intTimeDrop = intTimeDrop + 1
+        Else 
+           flagNumberBallDrop = flagNumberBallDrop + 1
+        EndIf     
+      EndIf
+    EndFor
+  EndIf
+ 
+  If flagNumberBallDrop  = intQuantityBall  Then
+      flagAnimations = flagAnimationsFalse
+  EndIf
+   flagNumberBallDrop = 0
+EndSub
+
+Sub Draw 
+  If flagExplosion = flagExplosionOff Then
+    Shapes.ShowShape (objFirstBall)
+    Shapes.Move(objFirstBall, Math.Round(dblFirstBallX), Math.Round(dblFirstBallY)) 
+  Else
+    For i = 0 To intQuantityBall
+      Shapes.HideShape(objFirstBall)
+      Shapes.ShowShape (objBalls[i])
+      Shapes.Move(objBalls[i], intX[i], intY[i])  
+    EndFor
+  EndIf
+EndSub
+  
